@@ -1,1 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabbed Application</title>
+  <style>
+    /* Fixed tab buttons container */
+    .tab-buttons {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #333;
+      padding: 10px;
+      text-align: center;
+      z-index: 1000;
+    }
+    .tab-buttons button {
+      margin: 0 5px;
+      padding: 10px 20px;
+      color: #fff;
+      background-color: #555;
+      border: none;
+      cursor: pointer;
+    }
+    .tab-buttons button:hover {
+      background-color: #777;
+    }
+    /* The iframe that displays tab content */
+    .content-frame {
+      position: absolute;
+      top: 60px; /* Leave space for the fixed buttons */
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: calc(100% - 60px);
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Tab Buttons -->
+  <div class="tab-buttons">
+    <button data-tab="character.html">Character</button>
+    <button data-tab="engineering.html">Engineering</button>
+  </div>
+
+  <!-- Iframe to load the external HTML files -->
+  <iframe id="contentFrame" class="content-frame" src="character.html"></iframe>
+
+  <script>
+    const buttons = document.querySelectorAll('.tab-buttons button');
+    const contentFrame = document.getElementById('contentFrame');
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabFile = button.getAttribute('data-tab');
+        contentFrame.src = tabFile;
+      });
+    });
+  </script>
+</body>
+</html>
 

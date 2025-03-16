@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drakudai Engineering</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #050505, #0d0d0d);
+      color: #33ccff;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    h1, h2, h3 {
+      text-align: center;
+      text-shadow: 0 0 5px rgba(51,204,255,0.7);
+    }
+    
+    /* Container for the engineering form */
+    .eng-container {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(5px);
+      border: 2px solid #33ccff;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(51,204,255,0.5);
+    }
+    
+    /* Form fields */
+    .eng-form label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    
+    .eng-form input[type="text"],
+    .eng-form input[type="number"],
+    .eng-form select,
+    .eng-form textarea {
+      padding: 6px;
+      margin-top: 4px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #33ccff;
+      border-radius: 3px;
+      color: #33ccff;
+      font-size: 14px;
+      outline: none;
+    }
+    
+    #techLevel { width: 70px; }
+    #itemType { width: auto; min-width: 100px; }
+    #engSkill { width: 70px; }
+    
+    /* Draggable Properties Table */
+    .prop-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .prop-table th, .prop-table td {
+      border: 1px solid #33ccff;
+      padding: 4px;
+      text-align: center;
+    }
+    .prop-table th {
+      background: rgba(51,204,255,0.15);
+      cursor: move;
+    }
+    .prop-table td {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    /* Bonus row: shows computed bonus (dice expression for Dmg, +X for others) */
+    #propertiesBonus input {
+      width: 80px;
+      padding: 2px;
+      font-size: 12px;
+      text-align: center;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #33ccff;
+    }
+    
+    /* Cost row: read-only numbers */
+    #propertiesDivisors input {
+      width: 50px;
+      padding: 2px;
+      font-size: 12px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #33ccff;
+      text-align: center;
+    }
+    
+    /* Buttons */
+    .eng-button {
+      background: rgba(51,204,255,0.1);
+      border: 1px solid #33ccff;
+      border-radius: 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: #33ccff;
+      font-size: 14px;
+      margin-top: 10px;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .eng-button:hover {
+      background: rgba(51,204,255,0.3);
+      box-shadow: 0 0 10px rgba(51,204,255,0.8);
+    }
+    
+    /* GM Randomizer area */
+    .gm-randomizer {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #33ccff;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.05);
+    }
+    
+    /* Notes: fill entire row */
+    #engNotes {
+      width: 100%;
+      height: 80px;
+      margin-top: 4px;
+      resize: vertical;
+    }
+    
+    /* Drag & Drop classes */
+    .dragElem {
+      opacity: 0.4;
+    }
+    .over {
+      outline: 2px dashed #fff;
+    }
+    
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 2000;
+    }
+    .modal-content {
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(5px);
+      margin: 5% auto;
+      padding: 20px;
+      border: 2px solid #33ccff;
+      border-radius: 10px;
+      max-width: 600px;
+      width: 90vw;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(51,204,255,0.8);
+    }
+  </style>
+</head>
+<body>
+  <h1>Drakudai Engineering</h1>
+  
+  <div class="eng-container">
+    <form class="eng-form">
+      <!-- Basic Info -->
+      <label for="itemName">Item Name:</label>
+      <input type="text" id="itemName" value="Generic Pistol">
+      
+      <label for="techLevel">Tech Level:</label>
+      <input type="number" id="techLevel" value="16" min="1" max="256">
+      
+      <label for="engSkill">Engineering Skill (INT + Bonus)<br>
+        <small>(Enter your character's INT plus Engineering skill bonus)</small>
+      </label>
+      <input type="number" id="engSkill" value="0" min="0">
+      
+      <label for="itemType">Item Type:</label>
+      <select id="itemType">
+        <option value="Weapon" selected>Weapon</option>
+        <option value="Armor">Armor</option>
+        <option value="Shield">Shield</option>
+      </select>
+      
+      <!-- For Shields, show extra shield type options -->
+      <div id="shieldTypeContainer" style="display:none; margin-top:10px;">
+        <label for="shieldType">Shield Version:</label>
+        <select id="shieldType">
+          <option value="Electrostatic" selected>Electrostatic</option>
+          <option value="Deflector">Deflector</option>
+          <option value="Unique">Unique</option>
+        </select>
+      </div>
+      
+      <!-- Draggable Properties Table: 3 rows (Header, Bonus, Cost) -->
+      <label>Blueprint Properties (3 rows: Header, Bonus, Cost):</label>
+      <table class="prop-table">
+        <thead>
+          <tr id="propertiesHeaders">
+            <!-- Populated dynamically based on Item Type -->
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Bonus Row -->
+          <tr id="propertiesBonus"></tr>
+          <!-- Cost Row -->
+          <tr id="propertiesDivisors"></tr>
+        </tbody>
+      </table>
+      <button type="button" class="eng-button" id="addPropertyBtn">Add Property</button>
+      
+      <!-- Engineering Results -->
+      <h3>Engineering Results</h3>
+      <div id="engResults">
+        <p>Engineering DC: <span id="engDC">0</span></p>
+        <p>Build Cost: $<input type="number" id="buildCost" value="0" style="width:100px;"></p>
+      </div>
+      
+      <!-- Notes -->
+      <label for="engNotes">Notes:</label>
+      <textarea id="engNotes" placeholder="Enter blueprint notes..."></textarea>
+      
+      <!-- Save & Load Buttons -->
+      <button type="button" class="eng-button" id="saveItemBtn">Save to JSON</button>
+      <button type="button" class="eng-button" id="loadItemBtn">Load JSON</button>
+      <input type="file" id="loadFileInput" accept=".json" style="display:none;">
+      
+      <!-- GM Randomizer -->
+      <div class="gm-randomizer">
+        <h3>GM Randomizer</h3>
+        <label for="gmTechLevel">Set Tech Level:</label>
+        <input type="number" id="gmTechLevel" value="16" min="1" max="256">
+        <button type="button" class="eng-button" id="randomizeTechBtn">Randomize Tech Level</button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Modal for Additional Item Mods (Placeholder) -->
+  <div id="weapon-modal" class="modal">
+    <div class="modal-content">
+      <h3>Item Modifiers</h3>
+      <p>Additional options can be added here.</p>
+      <button id="weaponModalClose" class="eng-button">Close</button>
+    </div>
+  </div>
+  
+  <script>
+    /* =====================================================
+       Global characterData object for entire character sheet
+    ===================================================== */
+    let characterData = {};
+    const savedData = localStorage.getItem("characterData");
+    if (savedData) {
+      try {
+        characterData = JSON.parse(savedData);
+      } catch (err) {
+        characterData = {};
+      }
+    }
+    if (!characterData.engineering) {
+      characterData.engineering = {};
+    }
+    
+    /* =====================================================
+       A) Blueprint Templates by Item Type
+    ===================================================== */
+    const blueprintTemplates = {
+      "Weapon": [
+        { name: "Ammo", defaultCost: 1 },
+        { name: "Dmg+", defaultCost: 4 },
+        { name: "Dmg", defaultCost: 8 },
+        { name: "Range", defaultCost: 12 },
+        { name: "P+", defaultCost: 8 },
+        { name: "Multiplier", defaultCost: 20 }
+      ],
+      "Armor": [
+        { name: "HP", defaultCost: 4 },
+        { name: "DR", defaultCost: 6 },
+        { name: "P+", defaultCost: 16 },
+        { name: "Multiplier", defaultCost: 20 },
+        { name: "Regen", defaultCost: 8 },
+        { name: "STR", defaultCost: 10 },
+        { name: "CON", defaultCost: 10 },
+        { name: "DEX", defaultCost: 12 },
+        { name: "Watts/hr", defaultCost: 14 },
+        { name: "CDS", defaultCost: 18 },
+        { name: "RDS", defaultCost: 18 },
+        { name: "MDS", defaultCost: 18 }
+      ],
+      "Shield": {
+        "Electrostatic": [
+          { name: "HP", defaultCost: 10 },
+          { name: "Watts/turn", defaultCost: 8 },
+          { name: "P+", defaultCost: 12 },
+          { name: "Multiplier", defaultCost: 14 }
+        ],
+        "Deflector": [
+          { name: "RDS", defaultCost: 10 },
+          { name: "MDS", defaultCost: 10 },
+          { name: "CDS", defaultCost: 10 },
+          { name: "HP", defaultCost: 8 },
+          { name: "P+", defaultCost: 12 },
+          { name: "Multiplier", defaultCost: 14 },
+          { name: "Watts", defaultCost: 8 }
+        ],
+        "Unique": [
+          { name: "HP", defaultCost: 10 },
+          { name: "Watts/turn", defaultCost: 8 },
+          { name: "P+", defaultCost: 12 },
+          { name: "Multiplier", defaultCost: 14 }
+        ]
+      }
+    };
+    
+    /* =====================================================
+       B) Dice Progression Chart for "Dmg" bonus
+    ===================================================== */
+    const dice_values = ['1d4','1d6','1d8','1d10','1d12','1d20','1d20+1d4','1d20+1d6','1d20+1d8','1d20+1d10','1d20+1d12','1d20+1d20','2d20+1d4','2d20+1d6','2d20+1d8','2d20+1d10','2d20+1d12','2d20+2d20','3d20+1d4','3d20+1d6','3d20+1d8','3d20+1d10','3d20+1d12','3d20+3d20','4d20+1d4','4d20+1d6','4d20+1d8','4d20+1d10','4d20+1d12','4d20+4d20','5d20+1d4','5d20+1d6','5d20+1d8','5d20+1d10','5d20+1d12','5d20+1d20','6d20+1d4','6d20+1d6','6d20+1d8','6d20+1d10','6d20+1d12','6d20+1d20','7d20+1d4','7d20+1d6','7d20+1d8','7d20+1d10','7d20+1d12','7d20+1d20','8d20+1d4','8d20+1d6','8d20+1d8','8d20+1d10','8d20+1d12','8d20+1d20','9d20+1d4','9d20+1d6','9d20+1d8','9d20+1d10','9d20+1d12','9d20+1d20','10d20+1d4','10d20+1d6','10d20+1d8','10d20+1d10','10d20+1d12','10d20+1d20','11d20+1d4','11d20+1d6','11d20+1d8','11d20+1d10','11d20+1d12','11d20+1d20','12d20+1d4','12d20+1d6','12d20+1d8','12d20+1d10','12d20+1d12','12d20+1d20','13d20+1d4','13d20+1d6','13d20+1d8','13d20+1d10','13d20+1d12','13d20+1d20','14d20+1d4','14d20+1d6','14d20+1d8','14d20+1d10','14d20+1d12','14d20+1d20','15d20+1d4','15d20+1d6','15d20+1d8','15d20+1d10','15d20+1d12','15d20+1d20','16d20+1d4','16d20+1d6','16d20+1d8','16d20+1d10','16d20+1d12','16d20+1d20','17d20+1d4','17d20+1d6','17d20+1d8','17d20+1d10','17d20+1d12','17d20+1d20','18d20+1d4','18d20+1d6','18d20+1d8','18d20+1d10','18d20+1d12','18d20+1d20','19d20+1d4','19d20+1d6','19d20+1d8','19d20+1d10','19d20+1d12','19d20+1d20','20d20+1d4','20d20+1d6','20d20+1d8','20d20+1d10','20d20+1d12','20d20+1d20','20d20+1d100','5d100','6d100','7d100','8d100','9d100','10d100+100'];
+    
+    function getDiceForBonus(bonus) {
+      if (bonus < 1) return "+0";
+      let index = bonus >= 10 ? bonus - 2 : bonus - 1;
+      if (index < 0) index = 0;
+      if (index >= dice_values.length) index = dice_values.length - 1;
+      return dice_values[index];
+    }
+    
+    /* =====================================================
+       C) Engineering DC & Build Cost Calculation 
+       Base DC = 10 + Tech Level; synergy penalty if properties are moved cheaper
+    ===================================================== */
+    function baseDC(techLevel) {
+      return 10 + parseInt(techLevel);
+    }
+    
+    function calculateSynergyPenalty() {
+      let penalty = 0;
+      const headers = document.querySelectorAll("#propertiesHeaders th");
+      headers.forEach((th, idx) => {
+        let propName = th.textContent.trim();
+        let defaultCost = parseInt(th.getAttribute("data-default")) || 8;
+        let currentCost = idx < defaultCostSlots.length 
+          ? defaultCostSlots[idx]
+          : defaultCostSlots[defaultCostSlots.length - 1] + 4*(idx - defaultCostSlots.length + 1);
+        let factor = synergyFactors[propName] || 1;
+        if (currentCost < defaultCost) {
+          penalty += factor * (defaultCost - currentCost);
+        }
+      });
+      return penalty;
+    }
+    
+    function computeEngineeringDC() {
+      const tl = parseInt(document.getElementById("techLevel").value) || 1;
+      let dc = baseDC(tl) + calculateSynergyPenalty();
+      const engSkill = parseInt(document.getElementById("engSkill").value) || 0;
+      dc = Math.max(0, dc - Math.floor(engSkill/2));
+      return dc;
+    }
+    
+    function computeBuildCost() {
+      let dc = computeEngineeringDC();
+      return Math.round(dc * 100/2 * 10);
+    }
+    
+    function updateEngResults() {
+      const dc = computeEngineeringDC();
+      const cost = computeBuildCost();
+      document.getElementById("engDC").textContent = dc;
+      document.getElementById("buildCost").value = cost;
+      
+      // Update bonus row based on Tech Level and assigned cost
+      const tl = parseInt(document.getElementById("techLevel").value) || 1;
+      const headers = document.querySelectorAll("#propertiesHeaders th");
+      const bonusCells = document.querySelectorAll("#propertiesBonus input");
+      headers.forEach((th, idx) => {
+        let assignedCost = idx < defaultCostSlots.length 
+          ? defaultCostSlots[idx]
+          : defaultCostSlots[defaultCostSlots.length - 1] + 4*(idx - defaultCostSlots.length + 1);
+        let bonusVal = Math.floor(tl / assignedCost);
+        let propName = th.textContent.trim();
+        if (propName === "Dmg") {
+          bonusCells[idx].value = getDiceForBonus(bonusVal);
+        } else {
+          bonusCells[idx].value = bonusVal > 0 ? `+${bonusVal}` : "+0";
+        }
+      });
+      
+      // Update cost row
+      const costCells = document.querySelectorAll("#propertiesDivisors input");
+      headers.forEach((th, idx) => {
+        let costVal = idx < defaultCostSlots.length 
+          ? defaultCostSlots[idx]
+          : defaultCostSlots[defaultCostSlots.length - 1] + 4*(idx - defaultCostSlots.length + 1);
+        costCells[idx].value = costVal;
+      });
+    }
+    
+    /* =====================================================
+       D) Draggable Properties
+    ===================================================== */
+    let dragSrcEl = null;
+    function handleDragStart(e) {
+      dragSrcEl = this;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', this.outerHTML);
+      this.classList.add('dragElem');
+    }
+    function handleDragOver(e) {
+      if (e.preventDefault) e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+    function handleDragEnter(e) {
+      this.classList.add('over');
+    }
+    function handleDragLeave(e) {
+      this.classList.remove('over');
+    }
+    function handleDrop(e) {
+      if (e.stopPropagation) e.stopPropagation();
+      if (dragSrcEl !== this) {
+        this.parentNode.removeChild(dragSrcEl);
+        let dropHTML = e.dataTransfer.getData('text/html');
+        this.insertAdjacentHTML('beforebegin', dropHTML);
+        let dropElem = this.previousSibling;
+        addDnDHandlers(dropElem);
+      }
+      return false;
+    }
+    function handleDragEnd(e) {
+      let cols = document.querySelectorAll('#propertiesHeaders th');
+      cols.forEach(col => {
+        col.classList.remove('over');
+        col.classList.remove('dragElem');
+      });
+      updateEngResults();
+    }
+    function addDnDHandlers(elem) {
+      elem.addEventListener('dragstart', handleDragStart, false);
+      elem.addEventListener('dragenter', handleDragEnter, false);
+      elem.addEventListener('dragover', handleDragOver, false);
+      elem.addEventListener('dragleave', handleDragLeave, false);
+      elem.addEventListener('drop', handleDrop, false);
+      elem.addEventListener('dragend', handleDragEnd, false);
+    }
+    function initDraggableProperties() {
+      let cols = document.querySelectorAll("#propertiesHeaders th");
+      cols.forEach(col => {
+        col.setAttribute("draggable", "true");
+        addDnDHandlers(col);
+      });
+    }
+    
+    /* =====================================================
+       E) Populate Properties Table Based on Item Type
+    ===================================================== */
+    function populatePropertiesTable() {
+      const itemType = document.getElementById("itemType").value;
+      let props = [];
+      if (itemType === "Weapon") {
+        props = blueprintTemplates.Weapon;
+      } else if (itemType === "Armor") {
+        props = blueprintTemplates.Armor;
+      } else if (itemType === "Shield") {
+        const shieldType = document.getElementById("shieldType").value;
+        props = blueprintTemplates.Shield[shieldType] || blueprintTemplates.Shield.Electrostatic;
+      }
+      
+      const headerRow = document.getElementById("propertiesHeaders");
+      const bonusRow = document.getElementById("propertiesBonus");
+      const costRow = document.getElementById("propertiesDivisors");
+      
+      headerRow.innerHTML = "";
+      bonusRow.innerHTML = "";
+      costRow.innerHTML = "";
+      
+      props.forEach(prop => {
+        let th = document.createElement("th");
+        th.textContent = prop.name;
+        th.setAttribute("data-default", prop.defaultCost);
+        // If item is Shield and shieldType is Unique, make header editable.
+        if(itemType === "Shield" && document.getElementById("shieldType").value === "Unique"){
+          th.contentEditable = "true";
+        } else {
+          th.contentEditable = "false";
+        }
+        headerRow.appendChild(th);
+        
+        let bonusTd = document.createElement("td");
+        bonusTd.innerHTML = '<input type="text" value="+0" readonly>';
+        bonusRow.appendChild(bonusTd);
+        
+        let costTd = document.createElement("td");
+        costTd.innerHTML = `<input type="number" value="${prop.defaultCost}" readonly>`;
+        costRow.appendChild(costTd);
+      });
+      
+      initDraggableProperties();
+      updateEngResults();
+    }
+    
+    /* =====================================================
+       F) Add Additional Property
+       New properties always have an editable header.
+    ===================================================== */
+    document.getElementById("addPropertyBtn").addEventListener("click", function() {
+      let newTh = document.createElement("th");
+      newTh.setAttribute("draggable", "true");
+      newTh.setAttribute("data-default", "8");
+      newTh.textContent = "NewProp";
+      newTh.contentEditable = "true";  // New property headers are editable.
+      document.getElementById("propertiesHeaders").appendChild(newTh);
+      
+      let newBonusTd = document.createElement("td");
+      newBonusTd.innerHTML = '<input type="text" value="+0" readonly>';
+      document.getElementById("propertiesBonus").appendChild(newBonusTd);
+      
+      let newDivTd = document.createElement("td");
+      let numProps = document.querySelectorAll("#propertiesHeaders th").length;
+      let costVal = numProps <= defaultCostSlots.length 
+                    ? defaultCostSlots[numProps - 1]
+                    : defaultCostSlots[defaultCostSlots.length - 1] + 4*(numProps - defaultCostSlots.length);
+      newDivTd.innerHTML = `<input type="number" value="${costVal}" readonly>`;
+      document.getElementById("propertiesDivisors").appendChild(newDivTd);
+      
+      initDraggableProperties();
+      updateEngResults();
+    });
+    
+    /* =====================================================
+       G) GM Randomizer
+    ===================================================== */
+    document.getElementById("randomizeTechBtn").addEventListener("click", function() {
+      let randomTL = Math.floor(Math.random() * 256) + 1;
+      document.getElementById("gmTechLevel").value = randomTL;
+      document.getElementById("techLevel").value = randomTL;
+      updateEngResults();
+    });
+    
+    /* =====================================================
+       H) Save & Load Entire Character Sheet as JSON
+    ===================================================== */
+    function collectEngineeringData() {
+      let engineering = {
+        itemName: document.getElementById("itemName").value,
+        techLevel: parseInt(document.getElementById("techLevel").value) || 1,
+        engSkill: parseInt(document.getElementById("engSkill").value) || 0,
+        itemType: document.getElementById("itemType").value,
+        shieldType: (document.getElementById("itemType").value === "Shield")
+                      ? document.getElementById("shieldType").value
+                      : null,
+        engDC: computeEngineeringDC(),
+        buildCost: parseInt(document.getElementById("buildCost").value) || 0,
+        notes: document.getElementById("engNotes").value,
+        properties: []
+      };
+      let headers = document.querySelectorAll("#propertiesHeaders th");
+      let bonusCells = document.querySelectorAll("#propertiesBonus input");
+      let costCells = document.querySelectorAll("#propertiesDivisors input");
+      headers.forEach((th, idx) => {
+        let propName = th.textContent.trim();
+        let assignedCost = parseInt(costCells[idx].value) || 8;
+        let bonusText = bonusCells[idx].value;
+        engineering.properties.push({
+          name: propName,
+          assignedCost: assignedCost,
+          bonus: bonusText
+        });
+      });
+      return engineering;
+    }
+    
+    function loadEngineeringData(engineering) {
+      document.getElementById("itemName").value = engineering.itemName || "Loaded Item";
+      document.getElementById("techLevel").value = engineering.techLevel || 1;
+      document.getElementById("engSkill").value = engineering.engSkill || 0;
+      document.getElementById("itemType").value = engineering.itemType || "Weapon";
+      document.getElementById("engNotes").value = engineering.notes || "";
+      document.getElementById("buildCost").value = engineering.buildCost || 0;
+      
+      if (engineering.itemType === "Shield") {
+        document.getElementById("shieldTypeContainer").style.display = "block";
+        if (engineering.shieldType) {
+          document.getElementById("shieldType").value = engineering.shieldType;
+        }
+      } else {
+        document.getElementById("shieldTypeContainer").style.display = "none";
+      }
+      
+      let headerRow = document.getElementById("propertiesHeaders");
+      let bonusRow = document.getElementById("propertiesBonus");
+      let costRow = document.getElementById("propertiesDivisors");
+      headerRow.innerHTML = "";
+      bonusRow.innerHTML = "";
+      costRow.innerHTML = "";
+      
+      (engineering.properties || []).forEach(prop => {
+        let newTh = document.createElement("th");
+        newTh.textContent = prop.name;
+        // For loaded properties, use the saved assignedCost as data-default.
+        newTh.setAttribute("data-default", prop.assignedCost);
+        // If itemType is Shield and shieldType is Unique, allow editing.
+        if(document.getElementById("itemType").value === "Shield" && document.getElementById("shieldType").value === "Unique"){
+          newTh.contentEditable = "true";
+        } else {
+          newTh.contentEditable = "false";
+        }
+        headerRow.appendChild(newTh);
+        
+        let newBonusTd = document.createElement("td");
+        newBonusTd.innerHTML = `<input type="text" value="${prop.bonus}" readonly>`;
+        bonusRow.appendChild(newBonusTd);
+        
+        let newCostTd = document.createElement("td");
+        newCostTd.innerHTML = `<input type="number" value="${prop.assignedCost}" readonly>`;
+        costRow.appendChild(newCostTd);
+      });
+      
+      initDraggableProperties();
+      updateEngResults();
+    }
+    
+    // Save entire character sheet (here we update the engineering portion)
+    document.getElementById("saveItemBtn").addEventListener("click", function() {
+      characterData.engineering = collectEngineeringData();
+      localStorage.setItem("characterData", JSON.stringify(characterData));
+      let dataStr = JSON.stringify(characterData, null, 2);
+      let blob = new Blob([dataStr], {type: "application/json"});
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement("a");
+      a.href = url;
+      a.download = "mike.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      alert("Blueprint saved to JSON (mike.json) along with entire character sheet.");
+    });
+    
+    // Load entire character sheet from JSON
+    document.getElementById("loadItemBtn").addEventListener("click", () => {
+      document.getElementById("loadFileInput").click();
+    });
+    document.getElementById("loadFileInput").addEventListener("change", e => {
+      let file = e.target.files[0];
+      if (!file) return;
+      let reader = new FileReader();
+      reader.onload = evt => {
+        try {
+          let loadedData = JSON.parse(evt.target.result);
+          characterData = loadedData;
+          localStorage.setItem("characterData", JSON.stringify(characterData));
+          if (characterData.engineering) {
+            loadEngineeringData(characterData.engineering);
+            alert("Loaded entire character sheet from JSON. Engineering updated!");
+          } else {
+            alert("Loaded JSON but no engineering data found.");
+          }
+        } catch (err) {
+          alert("Error reading JSON file: " + err);
+        }
+      };
+      reader.readAsText(file);
+    });
+    
+    /* =====================================================
+       I) Toggle Item Type & Shield Type Visibility
+    ===================================================== */
+    document.getElementById("itemType").addEventListener("change", function() {
+      const type = this.value;
+      if (type === "Shield") {
+        document.getElementById("shieldTypeContainer").style.display = "block";
+      } else {
+        document.getElementById("shieldTypeContainer").style.display = "none";
+      }
+      populatePropertiesTable();
+    });
+    document.getElementById("shieldType").addEventListener("change", function() {
+      populatePropertiesTable();
+    });
+    
+    document.getElementById("buildCost").addEventListener("blur", function() {
+      if (this.value === "" || isNaN(parseFloat(this.value))) {
+        this.value = computeBuildCost();
+      }
+    });
+    
+    /* =====================================================
+       J) Initialize Page
+    ===================================================== */
+    document.addEventListener("DOMContentLoaded", function() {
+      populatePropertiesTable();
+      updateEngResults();
+      document.getElementById("techLevel").addEventListener("input", updateEngResults);
+      document.getElementById("engSkill").addEventListener("input", updateEngResults);
+    });
+  </script>
+</body>
+</html>

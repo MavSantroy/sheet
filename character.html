@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Character</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    /* Overall Body */
+    body {
+      font-family: 'Orbitron', sans-serif;
+      /* A darker background gradient for a more neon/electric style */
+      background: linear-gradient(135deg, #050505, #0d0d0d);
+      color: #33ccff; /* Electric blue text color */
+      margin: 0;
+      padding: 20px;
+    }
+
+    /* Race Selector */
+    .race-selector {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .race-selector label {
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    .race-selector select {
+      padding: 6px 10px;
+      font-size: 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #33ccff;
+      border-radius: 3px;
+      color: #33ccff;
+      outline: none;
+      transition: background 0.3s ease;
+    }
+    .race-selector select:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Main container with two columns: Attributes (left), Properties (right) */
+    .holo-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      /* "Glass" / frosted effect using a semi-transparent background and backdrop-filter */
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(5px);
+      border: 2px solid #33ccff;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(51,204,255,0.5);
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+    }
+
+    /* Left Column: Attributes Section */
+    .attributes-section {
+      flex: 1;
+    }
+    .attributes-section h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      text-shadow: 0 0 5px rgba(51,204,255,0.7);
+    }
+    .attr-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .attr-table th, .attr-table td {
+      border: 1px solid #33ccff;
+      padding: 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .attr-table th {
+      background: rgba(51,204,255,0.15);
+    }
+
+    /* Buttons for Rolls and Modifiers */
+    .roll-button,
+    .toggle-extra-button {
+      background: rgba(51,204,255,0.1);
+      border: 1px solid #33ccff;
+      border-radius: 5px;
+      padding: 6px 10px;
+      cursor: pointer;
+      color: #33ccff;
+      font-size: 14px;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .roll-button:hover,
+    .toggle-extra-button:hover {
+      background: rgba(51,204,255,0.3);
+      box-shadow: 0 0 10px rgba(51,204,255,0.8);
+    }
+
+    .sum-display {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    /* Match the theme for LE input specifically in the attribute table */
+    .attr-table input.attr-input {
+      width: 80px;
+      padding: 5px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #33ccff;
+      border-radius: 3px;
+      text-align: center;
+      color: #33ccff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    /* Right Column: Character Properties Section */
+    .properties-section {
+      flex: 1;
+    }
+    .properties-section h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      text-shadow: 0 0 5px rgba(51,204,255,0.7);
+    }
+    .prop-heading {
+      grid-column: 1 / -1;
+      background: rgba(51,204,255,0.15);
+      padding: 5px;
+      font-weight: bold;
+      text-align: center;
+      border-radius: 5px;
+      margin-top: 10px;
+      position: relative;
+    }
+    .properties-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .property-cell {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(51,204,255,0.3);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      position: relative;
+    }
+    .property-cell h4 {
+      margin: 0;
+      margin-bottom: 5px;
+      font-size: 14px;
+      text-shadow: 0 0 3px rgba(51,204,255,0.7);
+    }
+    .property-cell input {
+      width: 80%;
+      padding: 5px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #33ccff;
+      border-radius: 3px;
+      text-align: center;
+      color: #33ccff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    /* Ensure mod-checkbox is positioned at the top-right within the property cell */
+    .mod-checkbox {
+      position: absolute;
+      top: 5px;
+      right: -25px;
+      cursor: pointer;
+    }
+
+    /* Modal Popup for Extra Fields (Modifiers) */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 2000;
+    }
+    .modal-content {
+      /* "Glass" style for the modal as well */
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(5px);
+      margin: 5% auto;
+      padding: 20px;
+      border: 2px solid #33ccff;
+      border-radius: 10px;
+      max-width: 900px;
+      width: 90vw;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(51,204,255,0.8);
+    }
+    .modal-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    .modal-table th,
+    .modal-table td {
+      border: 1px solid #33ccff;
+      padding: 6px;
+      text-align: center;
+    }
+    .modal-table th {
+      background: rgba(51,204,255,0.15);
+    }
+    .extra-input {
+      width: 50px;
+      padding: 4px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #33ccff;
+      border-radius: 3px;
+      text-align: center;
+      color: #33ccff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    /* Modal for Roll Results */
+    .roll-result-modal {
+      display: none; /* Hidden by default */
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 3000; /* Above the other modal */
+    }
+    .roll-result-content {
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(5px);
+      margin: 10% auto;
+      padding: 20px;
+      border: 2px solid #33ccff;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90vw;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(51,204,255,0.8);
+    }
+    .roll-log {
+      font-size: 12px;
+      margin-bottom: 10px;
+      text-align: left;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .roll-total {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #fff866;
+      text-shadow: 0 0 5px rgba(255,255,0,0.8);
+    }
+    .roll-close-button {
+      background: rgba(51,204,255,0.1);
+      border: 1px solid #33ccff;
+      border-radius: 5px;
+      color: #33ccff;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .roll-close-button:hover {
+      background: rgba(51,204,255,0.3);
+      box-shadow: 0 0 10px rgba(51,204,255,0.8);
+    }
+
+    /* Show/Hide fields in shield modal via .hidden class */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Race Dropdown -->
+  <div class="race-selector">
+    <label for="race">Race:</label>
+    <select id="race">
+      <option value="Custom">Custom</option>
+      <option value="Human">Human</option>
+      <option value="Sollox">Sollox</option>
+      <option value="Talaxian">Talaxian</option>
+      <option value="Thorn">Thorn</option>
+    </select>
+  </div>
+
+  <div class="holo-container">
+    <!-- Left Column: Attributes Section -->
+    <div class="attributes-section">
+      <h2>Attributes</h2>
+      <table class="attr-table">
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Sum</th>
+            <th>Modifiers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row for STR -->
+          <tr id="row_STR">
+            <td>
+              <button class="roll-button" data-attr="STR">STR</button>
+            </td>
+            <td><span class="sum-display" id="sum_STR">0</span></td>
+            <td>
+              <button class="toggle-extra-button" data-attr="STR" id="toggle_STR">Modifiers</button>
+            </td>
+          </tr>
+          <!-- Row for DEX -->
+          <tr id="row_DEX">
+            <td>
+              <button class="roll-button" data-attr="DEX">DEX</button>
+            </td>
+            <td><span class="sum-display" id="sum_DEX">0</span></td>
+            <td>
+              <button class="toggle-extra-button" data-attr="DEX" id="toggle_DEX">Modifiers</button>
+            </td>
+          </tr>
+          <!-- Row for CON -->
+          <tr id="row_CON">
+            <td>
+              <button class="roll-button" data-attr="CON">CON</button>
+            </td>
+            <td><span class="sum-display" id="sum_CON">0</span></td>
+            <td>
+              <button class="toggle-extra-button" data-attr="CON" id="toggle_CON">Modifiers</button>
+            </td>
+          </tr>
+          <!-- Row for INT -->
+          <tr id="row_INT">
+            <td>
+              <button class="roll-button" data-attr="INT">INT</button>
+            </td>
+            <td><span class="sum-display" id="sum_INT">0</span></td>
+            <td>
+              <button class="toggle-extra-button" data-attr="INT" id="toggle_INT">Modifiers</button>
+            </td>
+          </tr>
+          <!-- Row for WIS -->
+          <tr id="row_WIS">
+            <td>
+              <button class="roll-button" data-attr="WIS">WIS</button>
+            </td>
+            <td><span class="sum-display" id="sum_WIS">0</span></td>
+            <td>
+              <button class="toggle-extra-button" data-attr="WIS" id="toggle_WIS">Modifiers</button>
+            </td>
+          </tr>
+          <!-- Row for CHA -->
+          <tr id="row_CHA">
+            <td>
+              <button class="roll-button" data-attr="CHA">CHA</button>
+            </td>
+            <td><span class="sum-display" id="sum_CHA">0</span></td>
+            <td>
+              <button class="toggle-extra-button" data-attr="CHA" id="toggle_CHA">Modifiers</button>
+            </td>
+          </tr>
+          <!-- Row for LE (Life Energy) - Current and Max -->
+          <tr id="row_LE">
+            <td>LE</td>
+            <td>
+              <!-- Stacked alignment for Current and Max -->
+              <div style="display: flex; flex-direction: column; align-items: center;">
+                <div>
+                  <label style="margin-right: 24px;">Max:</label>
+                  <span class="sum-display" id="sum_LE">0</span>
+                </div>
+                <div style="margin-bottom: 6px;">
+                  <label for="current_LE" style="margin-right: 5px;">Current:</label>
+                  <input type="number" id="current_LE" class="attr-input" value="0">
+                </div>
+              </div>
+            </td>
+            <td>
+              <button class="toggle-extra-button" data-attr="LE" id="toggle_LE">Modifiers</button>
+            </td>
+          </tr>
+          <!-- Row for RE (Raw Energy) - No roll button -->
+          <tr id="row_RE">
+            <td>RE</td>
+            <td><span class="sum-display" id="sum_RE">0</span></td>
+            <td>
+              <button class="toggle-extra-button" data-attr="RE" id="toggle_RE">Modifiers</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- NEW WEAPON SECTION BELOW ATTRIBUTES -->
+  <h3 style="margin-top: 20px;">Weapon</h3>
+  <button class="roll-button" id="weaponRollBtn">Roll Weapon</button>
+  <button class="toggle-extra-button" id="weaponModsBtn">Modifiers</button>
+
+  <table class="weapon-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+    <thead>
+      <tr style="background: rgba(51,204,255,0.15);">
+        <th>Name</th>
+        <th>Attr (To-Hit)</th>
+        <th>Damage (DPC)</th>
+        <th>Bonus Dmg</th>
+        <th>P+</th>
+        <th>Mult</th>
+        <th>Ammo</th>
+        <th>Range</th>
+        <th>To-Hit Bonus</th>
+        <th>TL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <!-- 2nd row (user entries) -->
+        <td><input type="text" id="wpn_name" style="width: 90%;" value="Laser Rifle"></td>
+        <td>
+          <select id="wpn_attr" style="width: 90%;">
+            <option value="STR">STR</option>
+            <option value="DEX" selected>DEX</option>
+            <option value="CON">CON</option>
+            <option value="INT">INT</option>
+            <option value="WIS">WIS</option>
+            <option value="CHA">CHA</option>
+          </select>
+        </td>
+        <td><input type="number" id="wpn_damage" style="width: 60px;" value="16"></td>
+        <td><input type="number" id="wpn_bonus_damage" style="width: 60px;" value="4"></td>
+        <td><input type="number" id="wpn_p_plus" style="width: 60px;" value="16"></td>
+        <td><input type="number" id="wpn_mult" style="width: 60px;" value="1"></td>
+        <td><input type="text"   id="wpn_ammo" style="width: 60px;" value="6/6"></td>
+        <td><input type="text"   id="wpn_range" style="width: 60px;" value="30m"></td>
+        <td><input type="number" id="wpn_toHit" style="width: 60px;" value="2"></td>
+        <td><input type="number" id="wpn_tl" style="width: 60px;" value="16"></td>
+      </tr>
+      <!-- 3rd row: Divisors (optional) -->
+      <tr style="background: rgba(51,204,255,0.1);">
+        <th>Divisor</th>
+        <td></td> <!-- No divisor for the attribute dropdown -->
+        <td><input type="number" id="wpn_div_damage" style="width: 60px;" value="16"></td>
+        <td><input type="number" id="wpn_div_bonus"  style="width: 60px;" value="1"></td>
+        <td><input type="number" id="wpn_div_p_plus" style="width: 60px;" value="16"></td>
+        <td><input type="number" id="wpn_div_mult"   style="width: 60px;" value="1"></td>
+        <td><input type="number" id="wpn_div_ammo"   style="width: 60px;" value="1"></td>
+        <td><input type="number" id="wpn_div_range"  style="width: 60px;" value="1"></td>
+        <td><input type="number" id="wpn_div_tohit"  style="width: 60px;" value="1"></td>
+        <td></td> <!-- No divisor for TL -->
+      </tr>
+    </tbody>
+  </table>
+    </div>
+
+    <!-- Right Column: Character Properties Section -->
+    <div class="properties-section">
+      <h2>Character Properties</h2>
+      <div class="properties-grid">
+        <!-- Main Heading -->
+        <div class="prop-heading">Main</div>
+        <div class="property-cell">
+          <h4>HP</h4>
+          <input type="number" id="current_hp" value="0">
+        </div>
+        <div class="property-cell">
+          <h4 title="Max HP = (STR × CON) + HP_Modifiers">Max HP*</h4>
+          <input type="number" id="max_hp" value="0" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="max_hp" id="mod_max_hp">
+        </div>
+        <div class="property-cell">
+          <h4>Temp HP</h4>
+          <input type="number" id="temp_hp" value="0">
+        </div>
+        <div class="property-cell">
+          <h4 title="P+ = 1 + floor(CON/10) + P_Plus_Modifiers + Armor_P_Plus + Shield_P_Plus">P+</h4>
+          <input type="number" id="p_plus" value="1" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="p_plus" id="mod_p_plus">
+        </div>
+        <div class="property-cell">
+          <h4 title="RDS = 10 + DEX + RDS_Modifiers">RDS</h4>
+          <input type="number" id="rds" value="10" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="rds" id="mod_rds">
+        </div>
+        <div class="property-cell">
+          <h4 title="MDS = DEX + MDS_Modifiers">MDS</h4>
+          <input type="number" id="mds" value="10" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="mds" id="mod_mds">
+        </div>
+        <div class="property-cell">
+          <h4 title="CDS = 10 + CDS_Modifiers">CDS</h4>
+          <input type="number" id="cds" value="10" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="cds" id="mod_cds">
+        </div>
+        <div class="property-cell">
+          <h4 title="M.DS = 20 + WIS + M_DS_Modifiers">M.DS</h4>
+          <input type="number" id="m_ds" value="20" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="m_ds" id="mod_m_ds">
+        </div>
+        <div class="property-cell">
+          <h4 title="Dmg- = floor(CON/10) + Dmg_reduction_Modifiers">Dmg-</h4>
+          <input type="number" id="dmg_red" value="0" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="dmg_red" id="mod_dmg_red">
+        </div>
+        <div class="property-cell">
+          <h4 title="Regen = floor(CON/5) + Regen_Modifiers">Regen</h4>
+          <input type="number" id="regen_prop" value="0" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="regen" id="mod_regen_prop">
+        </div>
+        <div class="property-cell">
+          <h4 title="Move = 10 + DEX + Move_Modifiers">Move</h4>
+          <input type="number" id="movement_prop" value="0" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="movement" id="mod_movement_prop">
+        </div>
+        <div class="property-cell">
+          <h4 title="Init = DEX + Init_Modifiers">Init</h4>
+          <input type="number" id="init_prop" value="0" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="init" id="mod_init_prop">
+        </div>
+        <div class="property-cell">
+          <h4 title="Actions = 1 + floor(DEX/10) + Action_Modifiers">Actions</h4>
+          <input type="number" id="actions" value="0" readonly>
+          <input type="checkbox" class="mod-checkbox" data-prop="actions" id="mod_actions">
+        </div>
+
+        <!-- Armor Heading (with checkbox on left, Mods button on right) -->
+        <div class="prop-heading">
+          <label style="cursor: pointer;">
+            <input type="checkbox" id="armorOnCheckbox" style="margin-right: 6px;">
+            Armor
+          </label>
+          <button id="armorModsBtn" style="margin-left: 10px;">Mods</button>
+        </div>
+        <div class="property-cell">
+          <h4>HP</h4>
+          <input type="number" id="armor_current" value="0">
+        </div>
+        <div class="property-cell">
+          <h4>Max HP</h4>
+          <input type="number" id="armor_max" value="0">
+        </div>
+        <div class="property-cell">
+          <h4>Armor P+</h4>
+          <input type="number" id="armor_p_plus" value="0">
+        </div>
+
+        <!-- Shields Heading (with checkbox & Mods button) -->
+        <div class="prop-heading">
+          <label style="cursor: pointer;">
+            <input type="checkbox" id="shieldOnCheckbox" style="margin-right: 6px;">
+            Shields
+          </label>
+          <button id="shieldModsBtn" style="margin-left: 10px;">Mods</button>
+        </div>
+        <div class="property-cell">
+          <h4>Shield HP</h4>
+          <input type="number" id="shield_hp" value="0">
+        </div>
+        <div class="property-cell">
+          <h4>Max HP</h4>
+          <input type="number" id="shield_max" value="0">
+        </div>
+        <div class="property-cell">
+          <h4>Shield P+</h4>
+          <input type="number" id="shield_p_plus" value="0">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Popup for Attribute Modifiers -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3 id="modal-title">Extra Fields for ?</h3>
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>Racial</th>
+            <th>Gen</th>
+            <th>Cyb</th>
+            <th>Tmp</th>
+            <th>Psi</th>
+            <th>Art</th>
+            <th>Q</th>
+            <th>Misc</th>
+            <th>Neg</th>
+            <th id="modal-points-header">Points (+0)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="number" id="modal_racial" class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_gen"    class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_cyb"    class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_tmp"    class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_psi"    class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_art"    class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_q"      class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_misc"   class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_neg"    class="extra-input" value="0"></td>
+            <td><input type="number" id="modal_points" class="extra-input" value="0"></td>
+          </tr>
+        </tbody>
+      </table>
+      <button id="modal-close" class="roll-button">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal Popup for Property Modifiers -->
+  <div id="prop-modal" class="modal">
+    <div class="modal-content">
+      <h3 id="prop-modal-title">Modifiers for ?</h3>
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>Racial</th>
+            <th>Gen</th>
+            <th>Cyb</th>
+            <th>Tmp</th>
+            <th>Psi</th>
+            <th>Art</th>
+            <th>Q</th>
+            <th>Misc</th>
+            <th>Neg</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="number" id="prop_modal_racial" class="extra-input" value="0"></td>
+            <td><input type="number" id="prop_modal_gen"    class="extra-input" value="0"></td>
+            <td><input type="number" id="prop_modal_cyb"    class="extra-input" value="0"></td>
+            <td><input type="number" id="prop_modal_tmp"    class="extra-input" value="0"></td>
+            <td><input type="number" id="prop_modal_psi"    class="extra-input" value="0"></td>
+            <td><input type="number" id="prop_modal_art"    class="extra-input" value="0"></td>
+            <td><input type="number" id="prop_modal_q"      class="extra-input" value="0"></td>
+            <td><input type="number" id="prop_modal_misc"   class="extra-input" value="0"></td>
+            <td><input type="number" id="prop_modal_neg"    class="extra-input" value="0"></td>
+          </tr>
+        </tbody>
+      </table>
+      <button id="prop-modal-close" class="roll-button">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal Popup for Armor Mods -->
+  <div id="armor-modal" class="modal">
+    <div class="modal-content">
+      <h3>Armor Mods</h3>
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>STR</th>
+            <th>DEX</th>
+            <th>CON</th>
+            <th>RDS</th>
+            <th>MDS</th>
+            <th>CDS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="number" id="armor_str" class="extra-input" value="0"></td>
+            <td><input type="number" id="armor_dex" class="extra-input" value="0"></td>
+            <td><input type="number" id="armor_con" class="extra-input" value="0"></td>
+            <td><input type="number" id="armor_rds" class="extra-input" value="0"></td>
+            <td><input type="number" id="armor_mds" class="extra-input" value="0"></td>
+            <td><input type="number" id="armor_cds" class="extra-input" value="0"></td>
+          </tr>
+        </tbody>
+      </table>
+      <button id="armorModalClose" class="roll-button">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal Popup for Shield Mods -->
+  <div id="shield-modal" class="modal">
+    <div class="modal-content">
+      <h3>Shield Mods</h3>
+      <table class="modal-table">
+        <!-- Single column for labels on the left, fields on the right -->
+        <tbody>
+          <!-- Type (Deflector, Static, Custom) -->
+          <tr>
+            <th>Type:</th>
+            <td>
+              <select id="shield_type">
+                <option value="Deflector">Deflector</option>
+                <option value="Static">Static</option>
+                <option value="Custom">Custom</option>
+              </select>
+            </td>
+          </tr>
+          <!-- RDS -->
+          <tr id="shield_rds_row">
+            <th>RDS:</th>
+            <td><input type="number" id="shield_rds" class="extra-input" value="0"></td>
+          </tr>
+          <!-- Diameter (Static Only) -->
+          <tr id="shield_diameter_row" class="hidden">
+            <th>Diameter (m):</th>
+            <td><input type="number" id="shield_diameter" class="extra-input" value="0"></td>
+          </tr>
+          <!-- Watts: <input> : turn -->
+          <tr id="shield_watts_row">
+            <th>Watts (/turn):</th>
+            <td><input type="number" id="shield_watts" class="extra-input" value="0"></td>
+          </tr>
+          <!-- Battery: <current_batt_watts> : <max_batt_watts> -->
+          <tr id="shield_battery_row">
+            <th>Battery (current / max):</th>
+            <td>
+              <input type="number" id="shield_batt_current" class="extra-input" value="0" style="width: 60px;">
+              /
+              <input type="number" id="shield_batt_max" class="extra-input" value="0" style="width: 60px;">
+            </td>
+          </tr>
+          <!-- Size: <dropdown> Tiny, Small, Medium -->
+          <tr id="shield_size_row">
+            <th>Size:</th>
+            <td>
+              <select id="shield_size">
+                <option value="Tiny">Tiny</option>
+                <option value="Small">Small</option>
+                <option value="Medium">Medium</option>
+              </select>
+            </td>
+          </tr>
+          <!-- Dmg- (Deflector, Custom) -->
+          <tr id="shield_dmg_red_row">
+            <th>Dmg-:</th>
+            <td><input type="number" id="shield_dmg_red" class="extra-input" value="0"></td>
+          </tr>
+          <!-- Regen (Static, Custom) -->
+          <tr id="shield_regen_row" class="hidden">
+            <th>Regen (/turn):</th>
+            <td><input type="number" id="shield_regen" class="extra-input" value="0"></td>
+          </tr>
+        </tbody>
+      </table>
+      <button id="shieldModalClose" class="roll-button">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal Popup for Roll Results -->
+  <div id="roll-modal" class="roll-result-modal">
+    <div class="roll-result-content">
+      <div id="roll-log" class="roll-log"></div>
+      <div id="roll-final" class="roll-total"></div>
+      <button id="roll-close" class="roll-close-button">Close</button>
+    </div>
+  </div>
+  
+  <!-- NEW Weapon Mods popup -->
+  <div id="weapon-modal" class="modal">
+    <div class="modal-content">
+      <h3>Weapon Modifiers - Placeholder</h3>
+      <p>Extra fields or advanced modifiers for the weapon can go here.</p>
+      <button id="weaponModalClose" class="roll-button">Close</button>
+    </div>
+  </div>
+  
+  <script>
+    /*======================
+      Global Data Definitions
+    ======================*/
+
+    // Cost to convert "Points" into a +1 bonus for each attribute:
+    // STR +1 = 3 points, DEX +1 = 5 points, etc.
+    const attributePointCosts = {
+      STR: 3,
+      DEX: 5,
+      CON: 4,
+      INT: 5,
+      WIS: 4,
+      CHA: 4
+      // LE, RE remain 0 if not found
+    };
+
+    // Basic attribute storage
+    const attributeData = {
+      STR: { base: 10, racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0, points: 0 },
+      DEX: { base: 10, racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0, points: 0 },
+      CON: { base: 10, racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0, points: 0 },
+      INT: { base: 10, racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0, points: 0 },
+      WIS: { base: 10, racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0, points: 0 },
+      CHA: { base: 10, racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0, points: 0 },
+      LE:  { base: 0,  racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0, points: 0 },
+      RE:  { base: 0,  racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0, points: 0 }
+    };
+
+    // Helper for 9 columns in properties
+    function makePropData() {
+      return {
+        racial: 0, gen: 0, cyb: 0, tmp: 0, psi: 0, art: 0, q: 0, misc: 0, neg: 0
+      };
+    }
+
+    // The property data for main
+    const propertyData = {
+      main: {
+        max_hp:  makePropData(),
+        p_plus:  makePropData(),
+        rds:     makePropData(),
+        mds:     makePropData(),
+        cds:     makePropData(),
+        m_ds:    makePropData(),
+        dmg_red: makePropData(),
+        regen:   makePropData(),
+        movement: makePropData(),
+        init:    makePropData(),
+        actions: makePropData()
+      }
+    };
+
+    // Armor data
+    let armorOn = false;
+    const armorData = {
+      STR: 0,
+      DEX: 0,
+      CON: 0,
+      RDS: 0,
+      MDS: 0,
+      CDS: 0
+    };
+
+    // Shield data
+    let shieldOn = false;
+    const shieldData = {
+      type: "Deflector", // or "Static", "Custom"
+      rds: 0,
+      diameter: 0,  // static only
+      watts: 0,     // /turn
+      batt_current: 0,
+      batt_max: 0,
+      size: "Tiny", // default
+      dmg_red: 0,   // deflector
+      regen: 0      // static
+    };
+
+    /*===========================
+      Summation / Calculation Helpers
+    ===========================*/
+    // Sums the 9 columns in a property: (racial + gen + cyb + tmp + psi + art + q + misc) - neg
+    function sumPropModifiers(d) {
+      return (d.racial + d.gen + d.cyb + d.tmp + d.psi + d.art + d.q + d.misc) - d.neg;
+    }
+
+    // For Attributes: sum = base + (all 9 modifiers) + pointsBonus
+    function computeAttributeSum(attr) {
+      const d = attributeData[attr];
+      let baseSum =
+        (d.base + d.racial + d.gen + d.cyb + d.tmp + d.psi + d.art + d.q + d.misc) - d.neg;
+
+      // Convert 'points' into a bonus, if this attr has a cost
+      const cost = attributePointCosts[attr] || 0;
+      let pointsBonus = 0;
+      if (cost > 0) {
+        pointsBonus = Math.floor(d.points / cost);
+      }
+      return baseSum + pointsBonus;
+    }
+
+    // Example override logic for ARMOR (like we did previously).
+    // If you'd like to override attributes with Armor data, do it here.
+    function getFinalSTR() {
+      if (armorOn) return armorData.STR;
+      return computeAttributeSum("STR");
+    }
+    function getFinalDEX() {
+      if (armorOn) return armorData.DEX;
+      return computeAttributeSum("DEX");
+    }
+    function getFinalCON() {
+      if (armorOn) return armorData.CON;
+      return computeAttributeSum("CON");
+    }
+
+    // RE = sumOf(RE columns) + floor(Current_LE / 100)
+    function computeRE() {
+      const reSum = computeAttributeSum("RE");
+      const currentLE = parseInt(document.getElementById('current_LE').value) || 0;
+      return reSum + Math.floor(currentLE / 100);
+    }
+
+    // Max_HP = (STR × CON) + sumPropModifiers(max_hp)
+    function computeMaxHP() {
+      const str = getFinalSTR();
+      const con = getFinalCON();
+      const modTotal = sumPropModifiers(propertyData.main.max_hp);
+      return (str * con) + modTotal;
+    }
+
+    // P+ = 1 + floor(CON/10) + sumPropModifiers(p_plus) + armor + shield
+    function computePPlus() {
+      const con = getFinalCON();
+      const modTotal = sumPropModifiers(propertyData.main.p_plus);
+      const armorPPlus = parseInt(document.getElementById('armor_p_plus').value) || 0;
+      const shieldPPlus = parseInt(document.getElementById('shield_p_plus').value) || 0;
+      return 1 + Math.floor(con / 10) + modTotal + armorPPlus + shieldPPlus;
+    }
+
+    // RDS = 10 + DEX + sumPropModifiers(rds) normally
+    // If armor is on, we might do armorData.RDS
+    // If shield is on, we might do ???. For now, leaving original approach.
+    function computeRDS() {
+      if (armorOn) return armorData.RDS;
+      // If you want shield override, do something like: if (shieldOn) ...
+      const dex = getFinalDEX();
+      return 10 + dex + sumPropModifiers(propertyData.main.rds);
+    }
+
+    // MDS = DEX + sumPropModifiers(mds)
+    function computeMDS() {
+      if (armorOn) return armorData.MDS;
+      const dex = getFinalDEX();
+      return dex + sumPropModifiers(propertyData.main.mds);
+    }
+
+    // CDS = 10 + sumPropModifiers(cds)
+    function computeCDS() {
+      if (armorOn) return armorData.CDS;
+      return 10 + sumPropModifiers(propertyData.main.cds);
+    }
+
+    // M.DS = 20 + WIS + sumPropModifiers(m_ds)
+    function computeM_DS() {
+      const wis = computeAttributeSum("WIS");
+      const modTotal = sumPropModifiers(propertyData.main.m_ds);
+      return 20 + wis + modTotal;
+    }
+
+    // Dmg- = floor(CON/10) + sumPropModifiers(dmg_red)
+    function computeDmgRed() {
+      const con = getFinalCON();
+      const modTotal = sumPropModifiers(propertyData.main.dmg_red);
+      return Math.floor(con / 10) + modTotal;
+    }
+
+    // Regen = floor(CON/5) + sumPropModifiers(regen)
+    function computeRegen() {
+      const con = getFinalCON();
+      const modTotal = sumPropModifiers(propertyData.main.regen);
+      return Math.floor(con / 5) + modTotal;
+    }
+
+    // Move = 10 + DEX + sumPropModifiers(movement)
+    function computeMove() {
+      const dex = getFinalDEX();
+      const modTotal = sumPropModifiers(propertyData.main.movement);
+      return 10 + dex + modTotal;
+    }
+
+    // Init = DEX + sumPropModifiers(init)
+    function computeInit() {
+      const dex = getFinalDEX();
+      const modTotal = sumPropModifiers(propertyData.main.init);
+      return dex + modTotal;
+    }
+
+    // Actions = 1 + floor(DEX/10) + sumPropModifiers(actions)
+    function computeActions() {
+      const dex = getFinalDEX();
+      const modTotal = sumPropModifiers(propertyData.main.actions);
+      return 1 + Math.floor(dex / 10) + modTotal;
+    }
+
+    /*-----------------------------
+     Recalc ALL properties at once
+    -----------------------------*/
+    function recalcAllProps() {
+      // Update RE
+      document.getElementById('sum_RE').textContent = computeRE();
+
+      // Update Max HP
+      document.getElementById('max_hp').value = computeMaxHP();
+
+      // Update P+
+      document.getElementById('p_plus').value = computePPlus();
+
+      // Update RDS
+      document.getElementById('rds').value = computeRDS();
+
+      // Update MDS
+      document.getElementById('mds').value = computeMDS();
+
+      // Update CDS
+      document.getElementById('cds').value = computeCDS();
+
+      // Update M.DS
+      document.getElementById('m_ds').value = computeM_DS();
+
+      // Update Dmg-
+      document.getElementById('dmg_red').value = computeDmgRed();
+
+      // Update Regen
+      document.getElementById('regen_prop').value = computeRegen();
+
+      // Update Move
+      document.getElementById('movement_prop').value = computeMove();
+
+      // Update Init
+      document.getElementById('init_prop').value = computeInit();
+
+      // Update Actions
+      document.getElementById('actions').value = computeActions();
+
+      // Update LE Max
+      const newLE = computeAttributeSum("LE");
+      document.getElementById('sum_LE').textContent = newLE;
+
+      // Update displayed sums for STR/DEX/CON in the left column if Armor is overriding
+      document.getElementById('sum_STR').textContent = getFinalSTR();
+      document.getElementById('sum_DEX').textContent = getFinalDEX();
+      document.getElementById('sum_CON').textContent = getFinalCON();
+
+      // If you want shield data to override, add that logic here similarly
+      // e.g. if (shieldOn) override RDS, MDS, etc.
+    }
+
+    /*===========================
+      Roll Modal Logic (Exploding d20)
+    ===========================*/
+    function openRollModal(logArray, finalTotal) {
+      const logDiv = document.getElementById('roll-log');
+      logDiv.innerHTML = logArray.map(entry => `<div>${entry}</div>`).join("");
+      document.getElementById('roll-final').textContent = "Total: " + finalTotal;
+      document.getElementById('roll-modal').style.display = "block";
+    }
+
+    function closeRollModal() {
+      document.getElementById('roll-modal').style.display = "none";
+    }
+
+    document.getElementById('roll-close').addEventListener('click', closeRollModal);
+    window.addEventListener('click', function(event) {
+      const rollModal = document.getElementById('roll-modal');
+      if (event.target === rollModal) {
+        closeRollModal();
+      }
+    });
+
+    function rollDice(attr) {
+      const mod = (attr === "STR") ? getFinalSTR()
+                : (attr === "DEX") ? getFinalDEX()
+                : (attr === "CON") ? getFinalCON()
+                : computeAttributeSum(attr);
+
+      let rollLog = [];
+      let totalDice = 0;
+      let keepRolling = true;
+      while (keepRolling) {
+        let r = Math.floor(Math.random() * 20) + 1;
+        if (r === 20) {
+          rollLog.push("Rolled a natural 20! +20, rolling again...");
+          totalDice += 20;
+        } else {
+          rollLog.push("Rolled: " + r);
+          totalDice += r;
+          keepRolling = false;
+        }
+      }
+      rollLog.push("Attribute Modifier Sum: " + mod);
+      let finalTotal = totalDice + mod;
+      rollLog.push("Final Total: " + finalTotal);
+      openRollModal(rollLog, finalTotal);
+    }
+
+    document.querySelectorAll('.roll-button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const attr = this.getAttribute('data-attr');
+        rollDice(attr);
+      });
+    });
+
+    /*===========================
+      Modal Popup for Attribute Modifiers
+    ===========================*/
+
+    // Updates the "Points (+X)" header in the modal, based on current typed points
+    function updateModalPointsHeader(attr) {
+      const val = parseInt(document.getElementById('modal_points').value) || 0;
+      const cost = attributePointCosts[attr] || 0;
+      let bonus = 0;
+      if (cost > 0) {
+        bonus = Math.floor(val / cost);
+      }
+      document.getElementById('modal-points-header').textContent = `Points (+${bonus})`;
+    }
+
+    function openModal(attr) {
+      document.getElementById('modal-title').textContent = "Extra Fields for " + attr;
+      const d = attributeData[attr];
+      document.getElementById('modal_racial').value = d.racial;
+      document.getElementById('modal_gen').value    = d.gen;
+      document.getElementById('modal_cyb').value    = d.cyb;
+      document.getElementById('modal_tmp').value    = d.tmp;
+      document.getElementById('modal_psi').value    = d.psi;
+      document.getElementById('modal_art').value    = d.art;
+      document.getElementById('modal_q').value      = d.q;
+      document.getElementById('modal_misc').value   = d.misc;
+      document.getElementById('modal_neg').value    = d.neg;
+      document.getElementById('modal_points').value = d.points;
+
+      // Show the modal
+      const modal = document.getElementById('modal');
+      modal.style.display = "block";
+      modal.dataset.attribute = attr;
+
+      // Immediately update the "Points (+X)" header
+      updateModalPointsHeader(attr);
+
+      // Whenever user types in the Points field, recalc the header
+      document.getElementById('modal_points').oninput = () => updateModalPointsHeader(attr);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('modal');
+      const attr = modal.dataset.attribute;
+      let d = attributeData[attr];
+      d.racial = parseInt(document.getElementById('modal_racial').value) || 0;
+      d.gen    = parseInt(document.getElementById('modal_gen').value) || 0;
+      d.cyb    = parseInt(document.getElementById('modal_cyb').value) || 0;
+      d.tmp    = parseInt(document.getElementById('modal_tmp').value) || 0;
+      d.psi    = parseInt(document.getElementById('modal_psi').value) || 0;
+      d.art    = parseInt(document.getElementById('modal_art').value) || 0;
+      d.q      = parseInt(document.getElementById('modal_q').value)   || 0;
+      d.misc   = parseInt(document.getElementById('modal_misc').value)|| 0;
+      d.neg    = parseInt(document.getElementById('modal_neg').value) || 0;
+      d.points = parseInt(document.getElementById('modal_points').value) || 0;
+
+      modal.style.display = "none";
+      recalcAllProps();
+    }
+
+    document.querySelectorAll('.toggle-extra-button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        openModal(this.dataset.attr);
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('modal-close').addEventListener('click', closeModal);
+    });
+
+    window.addEventListener('click', function(event) {
+      const modal = document.getElementById('modal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+
+    /*==============================
+      Modal Popup for Property Modifiers
+    ================================*/
+    function openPropModal(propKey) {
+      document.getElementById('prop-modal-title').textContent = "Modifiers for " + propKey;
+      const d = propertyData.main[propKey];
+      document.getElementById('prop_modal_racial').value = d.racial;
+      document.getElementById('prop_modal_gen').value    = d.gen;
+      document.getElementById('prop_modal_cyb').value    = d.cyb;
+      document.getElementById('prop_modal_tmp').value    = d.tmp;
+      document.getElementById('prop_modal_psi').value    = d.psi;
+      document.getElementById('prop_modal_art').value    = d.art;
+      document.getElementById('prop_modal_q').value      = d.q;
+      document.getElementById('prop_modal_misc').value   = d.misc;
+      document.getElementById('prop_modal_neg').value    = d.neg;
+
+      const modal = document.getElementById('prop-modal');
+      modal.style.display = "block";
+      modal.dataset.prop = propKey;
+    }
+
+    function closePropModal() {
+      const modal = document.getElementById('prop-modal');
+      const propKey = modal.dataset.prop;
+      let d = propertyData.main[propKey];
+      d.racial = parseInt(document.getElementById('prop_modal_racial').value) || 0;
+      d.gen    = parseInt(document.getElementById('prop_modal_gen').value)    || 0;
+      d.cyb    = parseInt(document.getElementById('prop_modal_cyb').value)    || 0;
+      d.tmp    = parseInt(document.getElementById('prop_modal_tmp').value)    || 0;
+      d.psi    = parseInt(document.getElementById('prop_modal_psi').value)    || 0;
+      d.art    = parseInt(document.getElementById('prop_modal_art').value)    || 0;
+      d.q      = parseInt(document.getElementById('prop_modal_q').value)      || 0;
+      d.misc   = parseInt(document.getElementById('prop_modal_misc').value)   || 0;
+      d.neg    = parseInt(document.getElementById('prop_modal_neg').value)    || 0;
+
+      modal.style.display = "none";
+      recalcAllProps();
+
+      // Uncheck the property mod checkbox once closed
+      document.querySelector(`.mod-checkbox[data-prop='${propKey}']`).checked = false;
+    }
+
+    document.getElementById('prop-modal-close').addEventListener('click', closePropModal);
+    window.addEventListener('click', function(event) {
+      const modal = document.getElementById('prop-modal');
+      if (event.target === modal) {
+        closePropModal();
+      }
+    });
+
+    document.querySelectorAll('.mod-checkbox').forEach(chk => {
+      chk.addEventListener('change', function() {
+        if (this.checked) {
+          openPropModal(this.dataset.prop);
+        }
+      });
+    });
+
+    /*==============================
+      Armor Mods Popup & Checkbox
+    ==============================*/
+    document.getElementById('armorModsBtn').addEventListener('click', function() {
+      // Populate fields from armorData
+      document.getElementById('armor_str').value = armorData.STR;
+      document.getElementById('armor_dex').value = armorData.DEX;
+      document.getElementById('armor_con').value = armorData.CON;
+      document.getElementById('armor_rds').value = armorData.RDS;
+      document.getElementById('armor_mds').value = armorData.MDS;
+      document.getElementById('armor_cds').value = armorData.CDS;
+
+      document.getElementById('armor-modal').style.display = "block";
+    });
+
+    document.getElementById('armorModalClose').addEventListener('click', function() {
+      armorData.STR = parseInt(document.getElementById('armor_str').value) || 0;
+      armorData.DEX = parseInt(document.getElementById('armor_dex').value) || 0;
+      armorData.CON = parseInt(document.getElementById('armor_con').value) || 0;
+      armorData.RDS = parseInt(document.getElementById('armor_rds').value) || 0;
+      armorData.MDS = parseInt(document.getElementById('armor_mds').value) || 0;
+      armorData.CDS = parseInt(document.getElementById('armor_cds').value) || 0;
+
+      document.getElementById('armor-modal').style.display = "none";
+      recalcAllProps();
+    });
+
+    window.addEventListener('click', function(event) {
+      const modal = document.getElementById('armor-modal');
+      if (event.target === modal) {
+        document.getElementById('armorModalClose').click();
+      }
+    });
+
+    document.getElementById('armorOnCheckbox').addEventListener('change', function() {
+      armorOn = this.checked;
+      recalcAllProps();
+    });
+
+    /*==============================
+      Shield Mods Popup & Checkbox
+    ==============================*/
+    function updateShieldFieldsVisibility() {
+      const type = shieldData.type;
+      // Deflector: RDS, Watts, Battery, Size, Dmg-
+      // Static: RDS, Diameter, Watts, Battery, Size, Regen
+      // Custom: all fields
+      // Hide or show each row accordingly
+      // RDS always shown for Deflector/Static/Custom
+      // Diameter -> only for Static or Custom
+      // Watts -> always shown for all 3 (since user said they appear in each case)
+      // Battery -> always shown for all 3
+      // Size -> always shown for all 3
+      // Dmg- -> Deflector or Custom
+      // Regen -> Static or Custom
+
+      // RDS row
+      document.getElementById('shield_rds_row').classList.remove('hidden');
+      // diameter
+      const diameterRow = document.getElementById('shield_diameter_row');
+      if (type === "Static" || type === "Custom") {
+        diameterRow.classList.remove('hidden');
+      } else {
+        diameterRow.classList.add('hidden');
+      }
+      // watts row
+      document.getElementById('shield_watts_row').classList.remove('hidden');
+      // battery row
+      document.getElementById('shield_battery_row').classList.remove('hidden');
+      // size row
+      document.getElementById('shield_size_row').classList.remove('hidden');
+      // dmg- row
+      const dmgRow = document.getElementById('shield_dmg_red_row');
+      if (type === "Deflector" || type === "Custom") {
+        dmgRow.classList.remove('hidden');
+      } else {
+        dmgRow.classList.add('hidden');
+      }
+      // regen
+      const regenRow = document.getElementById('shield_regen_row');
+      if (type === "Static" || type === "Custom") {
+        regenRow.classList.remove('hidden');
+      } else {
+        regenRow.classList.add('hidden');
+      }
+    }
+
+    document.getElementById('shieldModsBtn').addEventListener('click', function() {
+      // Load shieldData into the fields
+      document.getElementById('shield_type').value = shieldData.type;
+      document.getElementById('shield_rds').value = shieldData.rds;
+      document.getElementById('shield_diameter').value = shieldData.diameter;
+      document.getElementById('shield_watts').value = shieldData.watts;
+      document.getElementById('shield_batt_current').value = shieldData.batt_current;
+      document.getElementById('shield_batt_max').value = shieldData.batt_max;
+      document.getElementById('shield_size').value = shieldData.size;
+      document.getElementById('shield_dmg_red').value = shieldData.dmg_red;
+      document.getElementById('shield_regen').value = shieldData.regen;
+
+      updateShieldFieldsVisibility();
+
+      document.getElementById('shield-modal').style.display = "block";
+    });
+
+    document.getElementById('shieldModalClose').addEventListener('click', function() {
+      // Save back
+      shieldData.type = document.getElementById('shield_type').value;
+      shieldData.rds = parseInt(document.getElementById('shield_rds').value) || 0;
+      shieldData.diameter = parseInt(document.getElementById('shield_diameter').value) || 0;
+      shieldData.watts = parseInt(document.getElementById('shield_watts').value) || 0;
+      shieldData.batt_current = parseInt(document.getElementById('shield_batt_current').value) || 0;
+      shieldData.batt_max = parseInt(document.getElementById('shield_batt_max').value) || 0;
+      shieldData.size = document.getElementById('shield_size').value;
+      shieldData.dmg_red = parseInt(document.getElementById('shield_dmg_red').value) || 0;
+      shieldData.regen = parseInt(document.getElementById('shield_regen').value) || 0;
+
+      document.getElementById('shield-modal').style.display = "none";
+      recalcAllProps();
+    });
+
+    window.addEventListener('click', function(event) {
+      const modal = document.getElementById('shield-modal');
+      if (event.target === modal) {
+        document.getElementById('shieldModalClose').click();
+      }
+    });
+
+    // Switch the visible fields when type changes
+    document.getElementById('shield_type').addEventListener('change', function() {
+      shieldData.type = this.value;
+      updateShieldFieldsVisibility();
+    });
+
+    document.getElementById('shieldOnCheckbox').addEventListener('change', function() {
+      shieldOn = this.checked;
+      recalcAllProps();
+    });
+
+    /*======================
+      Race Dropdown Event Handler
+    ======================*/
+    document.getElementById('race').addEventListener('change', function() {
+      const race = this.value;
+      if (race === "Human") {
+        attributeData.STR.racial = 1;
+        attributeData.DEX.racial = 1;
+        attributeData.CON.racial = 1;
+        attributeData.INT.racial = 1;
+        attributeData.WIS.racial = 1;
+        attributeData.CHA.racial = 1;
+      } else if (race === "Sollox") {
+        attributeData.STR.racial = 0;
+        attributeData.DEX.racial = 1;
+        attributeData.CON.racial = 0;
+        attributeData.INT.racial = 3;
+        attributeData.WIS.racial = 3;
+        attributeData.CHA.racial = 2;
+      } else if (race === "Talaxian") {
+        attributeData.STR.racial = 2;
+        attributeData.DEX.racial = 1;
+        attributeData.CON.racial = 3;
+        attributeData.INT.racial = 0;
+        attributeData.WIS.racial = 0;
+        attributeData.CHA.racial = 0;
+      } else if (race === "Thorn") {
+        attributeData.STR.racial = 0;
+        attributeData.DEX.racial = 0;
+        attributeData.CON.racial = 1;
+        attributeData.INT.racial = 2;
+        attributeData.WIS.racial = 2;
+        attributeData.CHA.racial = 2;
+      } else {
+        // Custom (reset all to 0)
+        attributeData.STR.racial = 0;
+        attributeData.DEX.racial = 0;
+        attributeData.CON.racial = 0;
+        attributeData.INT.racial = 0;
+        attributeData.WIS.racial = 0;
+        attributeData.CHA.racial = 0;
+      }
+      recalcAllProps();
+    });
+
+    // On initial load, recalc everything
+    recalcAllProps();
+  </script>
+  
+</body>
+</html>
